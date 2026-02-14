@@ -1641,9 +1641,9 @@ def run_dashboard():
     st.markdown('<div class="section-header">📋 Coverage Summary: Planned vs Reached Households</div>', unsafe_allow_html=True)
     
     # Get community column
-    q4_col = find_column(filtered_df, ['Q4. Community Name', 'community', 'community_name'])
-    lga_col = find_column(filtered_df, ['Q2. Local Government Area', 'lga', 'LGA'])
-    ward_col = find_column(filtered_df, ['Q3.Ward', 'Q3. Ward', 'ward', 'Ward'])
+    q4_col = find_column(filtered_df, ['community_name', 'Q4. Community Name', 'community', 'Community'])
+    lga_col = find_column(filtered_df, ['lgas', 'Q2. Local Government Area', 'lga', 'LGA'])
+    ward_col = find_column(filtered_df, ['wards', 'Q3.Ward', 'Q3. Ward', 'ward', 'Ward'])
     validation_status_col = find_column(filtered_df, ['_validation_status', 'validation_status', 'Validation Status'])
     
     if q4_col and not filtered_df.empty:
