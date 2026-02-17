@@ -21,15 +21,44 @@ ADMIN_USERNAME = "Admin"
 
 # LGA username to LGA name mapping (no passwords needed)
 LGA_CREDENTIALS = {
-    "Yola North": "Yola North",
+    "Demsa": "Demsa",
+    "Guyuk": "Guyuk",
+    "Hong": "Hong",
+    "Madagali": "Madagali",
+    "Michika": "Michika",
+    "Song": "Song",
 }
 
 
-KOBO_DATA_URL = "https://kf.kobotoolbox.org/api/v2/assets/aVixxMF2d57Q5KwJL7Jfcz/export-settings/esQWYXzp3tyHvbF2GaLECUt/data.xlsx"
+KOBO_DATA_URL = "https://kf.kobotoolbox.org/api/v2/assets/a5CDV2g7744aUaLsovefXT/export-settings/esDCz3F9xpSdgyrTtZy8M2v/data.xlsx"
 
 # ---------------- COMMUNITY MAPPING DATA ----------------
 COMMUNITY_MAPPING_DATA = """Q2. Local Government Area	Q3.Ward	Q4. Community Name	community_name	Planned HH
-Yola North	Yelwa	Yelwa	12011	19"""
+
+Demsa	Bille	Wurokiri	10111	19
+Demsa	Bille	Gansari	10112	110
+Demsa	Borrong	Mbumara	10121	133
+Demsa	Borrong	Bange	10122	190
+Guyuk	Banjiram	Kwamajuwe	10211	37
+Guyuk	Banjiram	Gidan Zana Gugu	10212	91
+Guyuk	Bobini	Waja	10221	51
+Guyuk	Bobini	Deremina	10222	94
+Hong	Bangshika	Yadi Masallachi	10311	40
+Hong	Bangshika	Bakin Kasuwa	10312	76
+Hong	Daksiri	Kwadaku	10321	41
+Hong	Daksiri	Degirigi	10322	25
+Madagali	Bebel	Hidik	10411	28
+Madagali	Bebel	Ndigawo	10412	40
+Madagali	Duhu	Shuwa Papka A	10421	70
+Madagali	Duhu	Wuro Haruna B	10422	23
+Michika	Bazza/Margi	Ghumtika Kasa	10511	38
+Michika	Bazza/Margi	Ldaba	10512	21
+Michika	Futudou/Futuless	Milike	10521	154
+Michika	Futudou/Futuless	Ntsoki	10522	70
+Song	Dirma	Dirma	10611	93
+Song	Dirma	Roffo Ii	10612	39
+Song	Dumne	Bariki	10621	57
+Song	Dumne	Hauyang	10622	35"""
 
 # Parse community mapping data
 COMMUNITY_DF = pd.read_csv(StringIO(COMMUNITY_MAPPING_DATA), sep='\t')
@@ -1349,7 +1378,7 @@ def login_page():
             - Username: `Admin`
             
             **LGA Users:**
-            - `Demsa`, `Guyuk`, `Hong`, `Madagali`, `Michika`, `Song`, `Yola North`
+            - `Demsa`, `Guyuk`, `Hong`, `Madagali`, `Michika`, `Song`
             
             """)
         
