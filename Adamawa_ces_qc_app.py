@@ -46,9 +46,9 @@ Guyuk	Bobini	Deremina	10222	94
 Hong	Bangshika	Yadi Masallachi	10311	40
 Hong	Bangshika	Bakin Kasuwa	10312	76
 Hong	Daksiri	Kwadaku	10321	41
-Hong	Daksiri	Degirigi	10322	25
+Hong	Daksiri	Daksiri Center	10322	25
 Madagali	Bebel	Hidik	10411	28
-Madagali	Bebel	Ndigawo	10412	40
+Madagali	Bebel	Dirif A	10412	40
 Madagali	Duhu	Shuwa Papka A	10421	70
 Madagali	Duhu	Wuro Haruna B	10422	23
 Michika	Bazza/Margi	Ghumtika Kasa	10511	38
@@ -1929,3 +1929,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
