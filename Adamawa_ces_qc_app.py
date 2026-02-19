@@ -49,7 +49,7 @@ Hong	Daksiri	Kwadaku	10321	41
 Hong	Daksiri	Daksiri Center	10322	25
 Madagali	Bebel	Hidik	10411	28
 Madagali	Bebel	Dirif A	10412	40
-Madagali	Duhu	Shuwa Papka A	10421	70
+Madagali	Duhu	Shuwa Papka B	10421	70
 Madagali	Duhu	Wuro Haruna B	10422	23
 Michika	Bazza/Margi	Ghumtika Kasa	10511	38
 Michika	Bazza/Margi	Ldaba	10512	21
