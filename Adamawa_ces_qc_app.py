@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 from io import BytesIO, StringIO
 import requests
+import re
 
 # ---------------- PAGE CONFIGURATION ----------------
 st.set_page_config(
@@ -577,6 +578,7 @@ def preprocess_data(sheets_dict):
         # Convert age column - check for Adamawa column name first
         age_col_variants = [
             'child_names11',
+            'Q88. Child name and age ${child_idd} as at when MDA was done (27th November to 2nd December or 13th to 14th December 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (21st to 27th November 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (13th to 22nd December 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (6th to 11th December 2025)',
@@ -1113,6 +1115,7 @@ def perform_qc_checks(df, child_df=None, full_df=None):
         # Find child sheet columns - updated for Adamawa structure
         age_col = find_column(child_df, [
             'child_names11',
+            'Q88. Child name and age ${child_idd} as at when MDA was done (27th November to 2nd December or 13th to 14th December 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (21st to 27th November 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (13th to 22nd December 2025)',
             'Q88. Child name and age ${child_idd} as at when MDA was done (6th to 11th December 2025)',
@@ -1129,24 +1132,32 @@ def perform_qc_checks(df, child_df=None, full_df=None):
         
         # Check Q94 (child swallowed AZM) AND child age >59 months
         if age_col and q94_col:
-            swallowed_over_59 = child_df[
-                (pd.to_numeric(child_df[age_col], errors='coerce') > 59) &
-                (child_df[q94_col].astype(str).str.contains('Yes', case=False, na=False))
-            ]
-            for idx, row in swallowed_over_59.iterrows():
-                submission_uuid = row.get('_submission__uuid', 'N/A')
-                parent_info = parent_lookup.get(submission_uuid, {'LGA': 'N/A', 'Ward': 'N/A', 'Community': 'N/A'})
-                qc_issues.append({
-                    'LGA': parent_info['LGA'],
-                    'Ward': parent_info['Ward'],
-                    'Community': parent_info['Community'],
-                    'Unique HH ID': parent_info.get('Unique HH ID', 'N/A'),
-                    'Enumerator': parent_info.get('Enumerator', 'N/A'),
-                    'Validation Status': parent_info.get('Validation Status', 'N/A'),
-                    'Issue Type': 'Q94 Yes & Child Age >59 months',
-                    'Description': f'Child {row.get("child_idd", "N/A")} aged {row.get(age_col, "N/A")} months (>59) swallowed AZM (unique_code2: {row.get("unique_code2", "N/A")})',
-                    'Row Index': idx
-                })
+            for idx, row in child_df.iterrows():
+                # Check if child swallowed AZM
+                swallowed = str(row.get(q94_col, '')).strip()
+                if 'yes' in swallowed.lower():
+                    # Extract age from text
+                    age_text = str(row.get(age_col, '')).strip()
+                    if age_text and age_text not in ['nan', 'N/A', '']:
+                        # Extract numeric value from text like "Khalid Ibrahim - 72 months"
+                        match = re.search(r'(\d+)\s*months?', age_text, re.IGNORECASE)
+                        if match:
+                            age_value = int(match.group(1))
+                            # Flag if age > 59 months AND child swallowed AZM
+                            if age_value > 59:
+                                submission_uuid = row.get('_submission__uuid', 'N/A')
+                                parent_info = parent_lookup.get(submission_uuid, {'LGA': 'N/A', 'Ward': 'N/A', 'Community': 'N/A'})
+                                qc_issues.append({
+                                    'LGA': parent_info['LGA'],
+                                    'Ward': parent_info['Ward'],
+                                    'Community': parent_info['Community'],
+                                    'Unique HH ID': parent_info.get('Unique HH ID', 'N/A'),
+                                    'Enumerator': parent_info.get('Enumerator', 'N/A'),
+                                    'Validation Status': parent_info.get('Validation Status', 'N/A'),
+                                    'Issue Type': 'Q94 Yes & Child Age >59 months',
+                                    'Description': f'Child {row.get("child_idd", "N/A")}: "{age_text}" aged {age_value} months (>59) swallowed AZM (unique_code2: {row.get("unique_code2", "N/A")})',
+                                    'Row Index': idx
+                                })
         
         # Check for Selection of Non-Eligible Child (age > 59 months in Q88)
         if age_col:
@@ -1154,7 +1165,6 @@ def perform_qc_checks(df, child_df=None, full_df=None):
                 age_text = str(row.get(age_col, '')).strip()
                 if age_text and age_text != 'nan' and age_text != 'N/A':
                     # Extract numeric value from text like "Khalid Ibrahim - 72 months"
-                    import re
                     match = re.search(r'(\d+)\s*months?', age_text, re.IGNORECASE)
                     if match:
                         age_value = int(match.group(1))
@@ -1852,6 +1862,74 @@ def run_dashboard():
         """)
     else:
         st.success("✅ **No QC issues found!** All data quality checks passed successfully.")
+        
+        # Debug info to help understand why no issues found
+        with st.expander("🔍 Debug Info: QC Check Details", expanded=True):
+            st.write(f"**Total records being checked:** {len(filtered_df)}")
+            st.write(f"**Child records (child_infoo):** {len(child_infoo_df) if child_infoo_df is not None and not child_infoo_df.empty else 0}")
+            
+            if not filtered_df.empty:
+                # Check what columns exist
+                st.write("### Available Columns in Main Sheet:")
+                q22_col = find_column(filtered_df, ['duration_of_stay', 'Q22. How long have you been living continuously in ${community_confirm}', 'Q22'])
+                q13_col = find_column(filtered_df, ['age_hhead', 'Q13. Age of Head of the Household', 'Q13'])
+                education_col = find_column(filtered_df, ['hh_education_level', 'Q20. Highest education level completed', 'Q20'])
+                occupation_col = find_column(filtered_df, ['hh_occupation', 'Q21. Occupation', 'Occupation', 'occupation', 'Q21'])
+                unique_code_col = find_column(filtered_df, ['unique_code', 'unique_code_1', 'unique', 'household_code'])
+                settlement_col = find_column(filtered_df, ['settlement_type', 'Q5. Type of Settlement', 'Q5', 'settlement'])
+                
+                st.write(f"- **Duration of stay column:** {q22_col if q22_col else '❌ Not found'}")
+                st.write(f"- **Age of HH Head column:** {q13_col if q13_col else '❌ Not found'}")
+                st.write(f"- **Education column:** {education_col if education_col else '❌ Not found'}")
+                st.write(f"- **Occupation column:** {occupation_col if occupation_col else '❌ Not found'}")
+                st.write(f"- **Unique code column:** {unique_code_col if unique_code_col else '❌ Not found'}")
+                st.write(f"- **Settlement type column:** {settlement_col if settlement_col else '❌ Not found'}")
+                
+                # Check for duplicates manually
+                if unique_code_col:
+                    validation_status_col = find_column(filtered_df, ['_validation_status', 'validation_status', 'Validation Status'])
+                    df_for_dup_check = filtered_df.copy()
+                    if validation_status_col:
+                        df_for_dup_check = df_for_dup_check[
+                            ~df_for_dup_check[validation_status_col].astype(str).str.contains('Not Approved', case=False, na=False)
+                        ]
+                    duplicates = df_for_dup_check[df_for_dup_check.duplicated(subset=[unique_code_col], keep=False)]
+                    st.write(f"- **Duplicate unique_code records:** {len(duplicates)}")
+                
+                # Check child sheet columns
+                if child_infoo_df is not None and not child_infoo_df.empty:
+                    st.write("### Available Columns in Child Sheet:")
+                    age_col = find_column(child_infoo_df, [
+                        'child_names11',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done (27th November to 2nd December or 13th to 14th December 2025)',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done (21st to 27th November 2025)',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done (13th to 22nd December 2025)',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done (6th to 11th December 2025)',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done (19th to 25th July 2025)',
+                        'Q88. Child name and age ${child_idd} as at when MDA was done'
+                    ])
+                    q94_col = find_column(child_infoo_df, ['swallow', 'Q94. Did child ${child_idd} swallow the AZM offered?', 'Q94'])
+                    st.write(f"- **Child name/age column:** {age_col if age_col else '❌ Not found'}")
+                    st.write(f"- **Swallow AZM column:** {q94_col if q94_col else '❌ Not found'}")
+                    
+                    if age_col:
+                        st.write(f"- **Sample child_names11 values:**")
+                        st.code("\n".join(child_infoo_df[age_col].head(5).astype(str).tolist()))
+                    
+                    # Check for issues manually
+                    if age_col:
+                        over_59_count = 0
+                        for idx, row in child_infoo_df.head(20).iterrows():
+                            age_text = str(row.get(age_col, '')).strip()
+                            if age_text and age_text not in ['nan', 'N/A', '']:
+                                match = re.search(r'(\d+)\s*months?', age_text, re.IGNORECASE)
+                                if match:
+                                    age_value = int(match.group(1))
+                                    if age_value > 59:
+                                        over_59_count += 1
+                        st.write(f"- **Children >59 months (first 20 records):** {over_59_count}")
+                else:
+                    st.warning("⚠️ Child sheet (child_infoo) is empty or not loaded!")
         
         # Debug info to help understand why no issues found
         with st.expander("🔍 Debug Info: Why no issues found?"):
