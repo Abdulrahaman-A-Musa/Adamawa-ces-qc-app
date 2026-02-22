@@ -30,8 +30,8 @@ LGA_CREDENTIALS = {
     "Song": "Song",
 }
 
-
-KOBO_DATA_URL = "https://kf.kobotoolbox.org/api/v2/assets/a5CDV2g7744aUaLsovefXT/export-settings/esDCz3F9xpSdgyrTtZy8M2v/data.xlsx"
+# Load KoboToolbox URL from Streamlit secrets (secure)
+KOBO_DATA_URL = st.secrets.get("KOBO_DATA_URL", "")
 
 # ---------------- COMMUNITY MAPPING DATA ----------------
 COMMUNITY_MAPPING_DATA = """Q2. Local Government Area	Q3.Ward	Q4. Community Name	community_name	Planned HH
